@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import Swal from "Sweetalert2";
-import "Sweetalert2/dist/Sweetalert2.min.css";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 import { supabase } from "../lib/supabase";
 
 export default function Courses() {

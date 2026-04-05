@@ -1,7 +1,7 @@
 // Leave.jsx
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
-import Swal from "Sweetalert2";
+import Swal from "sweetalert2";
 import "Sweetalert2/dist/Sweetalert2.min.css";
 
 export default function Leave() {

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Swal from "Sweetalert2";
+import Swal from "sweetalert2";
 
 export default function Contact() {
   const [form, setForm] = useState({

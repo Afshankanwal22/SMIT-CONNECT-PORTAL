@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Swal from "Sweetalert2";
+import Swal from "sweetalert2";
 import 'Sweetalert2/dist/Sweetalert2.min.css';
 
 export default function AdminLogin() {
