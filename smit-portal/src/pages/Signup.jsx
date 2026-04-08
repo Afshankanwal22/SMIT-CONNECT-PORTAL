@@ -1,162 +1,195 @@
 import { useState } from "react";
-import { supabase } from '../lib/supabase';
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 import Swal from "sweetalert2";
-import "sweetalert2/dist/sweetalert2.min.css";
+import {
+  FaUser,
+  FaIdCard,
+  FaPhone,
+  FaLock,
+  FaHashtag,
+} from "react-icons/fa";
 
 export default function Signup() {
+  const navigate = useNavigate();
+
   const [name, setName] = useState("");
   const [cnic, setCnic] = useState("");
   const [roll, setRoll] = useState("");
   const [contact, setContact] = useState("");
   const [password, setPassword] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSignup = async () => {
     if (!name || !cnic || !roll || !contact || !password) {
-      Swal.fire({
-        icon: "warning",
-        title: "Oops!",
-        text: "Please fill all the fields.",
-      });
+      Swal.fire("Oops!", "Please fill all fields", "warning");
       return;
     }
 
     setLoading(true);
+
     try {
-      // Check if student already exists (optional)
       const { data, error } = await supabase
         .from("students")
         .select("*")
         .eq("cnic", cnic)
         .single();
 
-      if (error && error.code !== "PGRST116") throw error; // Ignore no row error
+      if (error && error.code !== "PGRST116") throw error;
 
       if (data) {
-        Swal.fire({
-          icon: "error",
-          title: "Signup Denied",
-          text: "CNIC already exists. Contact admin.",
-        });
+        Swal.fire("Error", "CNIC already exists", "error");
         setLoading(false);
         return;
       }
 
-      // Insert new student
       const { error: insertError } = await supabase
         .from("students")
-        .insert([{ name, cnic, roll_no: roll, contact_number: contact, password }]);
+        .insert([
+          {
+            name,
+            cnic,
+            roll_no: roll,
+            contact_number: contact,
+            password,
+          },
+        ]);
 
       if (insertError) throw insertError;
 
-      // Success alert with redirect
       Swal.fire({
         icon: "success",
-        title: "Signup Successful!",
+        title: "Signup Successful 🎉",
         text: "Redirecting to Login...",
         timer: 2000,
         showConfirmButton: false,
-        willClose: () => {
-          // Redirect to login page
-          window.location.href = "/login"; // replace with your login route
-        },
+        willClose: () => navigate("/login"),
       });
-
-      setLoading(false);
     } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: err.message,
-      });
-      setLoading(false);
+      Swal.fire("Error", err.message, "error");
     }
+
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-green-200 flex items-center justify-center overflow-hidden">
-      <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-sm flex flex-col gap-4">
+    <div className="min-h-screen flex">
 
-        {/* Logo */}
-        <div className="flex justify-center">
-          <img
-            src="https://lms.saylanimit.com/logo.png"
-            alt="Logo"
-            className="h-16 w-auto"
-          />
-        </div>
-
-        {/* Name */}
-        <input
-          className="border border-gray-300 p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
-          placeholder="Full Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+      {/* LEFT SIDE */}
+      <div className="hidden md:flex w-1/2 bg-gradient-to-br from-green-700 to-green-900 text-white flex-col justify-center items-center p-10">
+        <img
+          src="https://lms.saylanimit.com/logo.png"
+          className="h-20 mb-6"
         />
-
-        {/* CNIC */}
-        <input
-          className="border border-gray-300 p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
-          placeholder="CNIC (42101-1234567-8)"
-          value={cnic}
-          onChange={(e) => setCnic(e.target.value)}
-        />
-
-        {/* Roll No */}
-        <input
-          className="border border-gray-300 p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
-          placeholder="Roll Number"
-          value={roll}
-          onChange={(e) => setRoll(e.target.value)}
-        />
-
-        {/* Contact Number */}
-        <input
-          className="border border-gray-300 p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
-          placeholder="Contact Number"
-          value={contact}
-          onChange={(e) => setContact(e.target.value)}
-        />
-
-        {/* Password */}
-        <div className="relative">
-          <input
-            type={showPassword ? "text" : "password"}
-            className="border border-gray-300 p-2 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-green-400"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <span
-            className="absolute right-3 top-2 text-gray-500 cursor-pointer select-none"
-            onClick={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? "Hide" : "Show"}
-          </span>
-        </div>
-
-        {/* Signup Button */}
-        <button
-          onClick={handleSignup}
-          disabled={loading}
-          className={`bg-green-500 text-white p-2 rounded-xl font-semibold hover:bg-green-600 transition ${
-            loading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-        >
-          {loading ? "Signing up..." : "Signup"}
-        </button>
-
-        {/* Login Link */}
-        <p className="text-center text-gray-500 text-sm">
-          Already have an account?{" "}
-          <span
-            className="text-green-600 cursor-pointer hover:underline"
-            onClick={() => window.location.href = "/login"}
-          >
-            Login
-          </span>
+        <h1 className="text-4xl font-bold mb-4">Join SMIT</h1>
+        <p className="text-lg text-center opacity-90">
+          Start your journey with Saylani Mass IT Training.
         </p>
+      </div>
+
+      {/* RIGHT SIDE */}
+      <div className="flex flex-1 items-center justify-center bg-gray-100 p-6">
+
+        <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
+
+          <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">
+            Create Account
+          </h2>
+
+          {/* Name */}
+          <div className="relative mb-4">
+            <FaUser className="absolute top-4 left-3 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Full Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full pl-10 p-3 border rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
+            />
+          </div>
+
+          {/* CNIC */}
+          <div className="relative mb-4">
+            <FaIdCard className="absolute top-4 left-3 text-gray-400" />
+            <input
+              type="text"
+              placeholder="CNIC (42101-1234567-8)"
+              value={cnic}
+              onChange={(e) => setCnic(e.target.value)}
+              className="w-full pl-10 p-3 border rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
+            />
+          </div>
+
+          {/* Roll No */}
+          <div className="relative mb-4">
+            <FaHashtag className="absolute top-4 left-3 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Roll Number"
+              value={roll}
+              onChange={(e) => setRoll(e.target.value)}
+              className="w-full pl-10 p-3 border rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
+            />
+          </div>
+
+          {/* Contact */}
+          <div className="relative mb-4">
+            <FaPhone className="absolute top-4 left-3 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Contact Number"
+              value={contact}
+              onChange={(e) => setContact(e.target.value)}
+              className="w-full pl-10 p-3 border rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
+            />
+          </div>
+
+          {/* Password */}
+          <div className="relative mb-5">
+            <FaLock className="absolute top-4 left-3 text-gray-400" />
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full pl-10 p-3 border rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
+            />
+
+            <span
+              className="absolute right-3 top-3 text-sm cursor-pointer text-gray-500"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? "Hide" : "Show"}
+            </span>
+          </div>
+
+          {/* Button */}
+          <button
+            onClick={handleSignup}
+            disabled={loading}
+            className="w-full bg-green-600 text-white p-3 rounded-xl font-semibold hover:bg-green-700 transition active:scale-95 flex justify-center items-center"
+          >
+            {loading ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              "Signup"
+            )}
+          </button>
+
+          {/* Login */}
+          <p className="text-center text-gray-500 mt-6">
+            Already have an account?{" "}
+            <span
+              onClick={() => navigate("/login")}
+              className="text-green-600 font-semibold cursor-pointer hover:underline"
+            >
+              Login
+            </span>
+          </p>
+
+        </div>
       </div>
     </div>
   );

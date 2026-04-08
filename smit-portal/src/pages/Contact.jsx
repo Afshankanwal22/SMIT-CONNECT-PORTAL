@@ -1,5 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+import { FaPhone, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa";
+
+// Leaflet default marker fix
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
 
 export default function Contact() {
   const [form, setForm] = useState({
@@ -8,6 +23,24 @@ export default function Contact() {
     phone: "",
     message: "",
   });
+  const [position, setPosition] = useState([24.8607, 67.0011]); // default Karachi
+  const [loading, setLoading] = useState(false);
+
+  // Get live location
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+    } else {
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          setPosition([latitude, longitude]);
+        },
+        (err) => alert("Error getting location: " + err.message),
+        { enableHighAccuracy: true }
+      );
+    }
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -15,120 +48,142 @@ export default function Contact() {
       Swal.fire("Error", "Please fill all fields", "warning");
       return;
     }
-    Swal.fire("Success", "Your message has been submitted", "success");
-    setForm({ name: "", email: "", phone: "", message: "" });
+    setLoading(true);
+
+    // You can send form + position to backend here
+    setTimeout(() => {
+      Swal.fire(
+        "Success 🎉",
+        `Message sent successfully. Your location: [${position[0].toFixed(
+          5
+        )}, ${position[1].toFixed(5)}]`,
+        "success"
+      );
+      setForm({ name: "", email: "", phone: "", message: "" });
+      setLoading(false);
+    }, 1000);
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-
-      {/* HERO SECTION */}
-      <div className="bg-green-700 relative">
-        <div className="max-w-6xl mx-auto px-4 py-24 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Contact Us
-          </h1>
-          <p className="text-lg md:text-xl text-green-100">
-            Have a question or need support? Reach out to us today!
-          </p>
-        </div>
-        <div className="absolute bottom-0 w-full">
-          <svg viewBox="0 0 1440 320" className="w-full h-16 fill-white">
-            <path d="M0,224L1440,64L1440,320L0,320Z"></path>
-          </svg>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* HERO */}
+      <div className="bg-gradient-to-r from-green-700 to-green-900 text-white text-center py-24">
+        <h1 className="text-5xl font-bold mb-4">Contact Us</h1>
+        <p className="text-green-100 text-lg">
+          We’re here to help — reach out anytime!
+        </p>
       </div>
 
-      {/* MAIN CONTACT SECTION */}
-      <div className="max-w-6xl mx-auto px-4 py-16 grid md:grid-cols-2 gap-12">
-        
-        {/* LEFT: Contact Info + Map */}
+      {/* MAIN */}
+      <div className="max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-12">
+        {/* LEFT SIDE */}
         <div className="space-y-8">
-          <h2 className="text-3xl font-bold text-gray-800">Get in Touch</h2>
-          <p className="text-gray-600">
-            Fill out the form and our team will get back to you as soon as possible.
-          </p>
+          <div>
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">
+              Get in Touch
+            </h2>
+            <p className="text-gray-600">
+              Our team is ready to assist you. Your current location is shown
+              below.
+            </p>
+          </div>
 
+          {/* Info Cards */}
           <div className="space-y-4">
-            <div className="flex items-start gap-4">
-              <svg className="w-6 h-6 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM12 11.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
-              </svg>
-              <p className="text-gray-600">123 SMIT Street, Karachi, Pakistan</p>
+            <div className="flex items-center gap-4 bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+              <FaMapMarkerAlt className="text-green-600 text-xl" />
+              <span className="text-gray-700">Karachi, Pakistan</span>
             </div>
 
-            <div className="flex items-start gap-4">
-              <svg className="w-6 h-6 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M6.62 10.79a15.466 15.466 0 006.59 6.59l2.2-2.2a1 1 0 011.11-.21c1.21.48 2.53.74 3.88.74a1 1 0 011 1v3.5a1 1 0 01-1 1C10.07 21.5 2.5 13.93 2.5 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.35.26 2.67.74 3.88a1 1 0 01-.21 1.11l-2.2 2.2z"/>
-              </svg>
-              <p className="text-gray-600">+92-300-1234567</p>
+            <div className="flex items-center gap-4 bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+              <FaPhone className="text-green-600 text-xl" />
+              <span className="text-gray-700">+92-300-1234567</span>
             </div>
 
-            <div className="flex items-start gap-4">
-              <svg className="w-6 h-6 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-              </svg>
-              <p className="text-gray-600">info@smitcourses.com</p>
+            <div className="flex items-center gap-4 bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+              <FaEnvelope className="text-green-600 text-xl" />
+              <span className="text-gray-700">info@smitcourses.com</span>
             </div>
           </div>
 
-          {/* GOOGLE MAP */}
-          <div className="mt-6 rounded-lg overflow-hidden shadow-lg">
-            <iframe
-              title="SMIT Location"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3620.0000000000005!2d67.001!3d24.850!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3eb33f0000000001%3A0x0000000000000000!2sKarachi!5e0!3m2!1sen!2s!4v1600000000000!5m2!1sen!2s"
-              className="w-full h-64 border-0"
-              allowFullScreen=""
-              loading="lazy"
-            ></iframe>
+          {/* LIVE MAP */}
+          <div className="rounded-2xl overflow-hidden shadow-lg mt-6">
+            <MapContainer center={position} zoom={15} className="w-full h-64">
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution="&copy; OpenStreetMap contributors"
+              />
+              <Marker position={position}>
+                <Popup>Your Current Location</Popup>
+              </Marker>
+            </MapContainer>
           </div>
         </div>
 
-        {/* RIGHT: Contact Form */}
-        <div className="bg-white p-8 rounded-xl shadow-lg">
-          <h3 className="text-2xl font-bold text-gray-800 mb-6">Send a Message</h3>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        {/* RIGHT SIDE (FORM) */}
+        <div className="bg-white p-8 rounded-2xl shadow-2xl">
+          <h3 className="text-2xl font-bold text-gray-800 mb-6">
+            Send a Message
+          </h3>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             <input
               type="text"
               placeholder="Full Name"
-              className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-green-400 focus:outline-none"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
             />
             <input
               type="email"
               placeholder="Email Address"
-              className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-green-400 focus:outline-none"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
+              className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
             />
             <input
               type="tel"
               placeholder="Phone Number"
-              className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-green-400 focus:outline-none"
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
             />
             <textarea
               placeholder="Your Message"
-              className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-green-400 focus:outline-none h-32 resize-none"
               value={form.message}
               onChange={(e) => setForm({ ...form, message: e.target.value })}
+              className="w-full p-3 border rounded-xl h-32 resize-none focus:ring-2 focus:ring-green-500 outline-none"
             />
             <button
               type="submit"
-              className="w-full py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition"
+              disabled={loading}
+              className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition active:scale-95 flex justify-center items-center"
             >
-              Submit
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                "Send Message"
+              )}
             </button>
           </form>
         </div>
       </div>
 
+      {/* CTA */}
+      <div className="bg-green-700 text-white text-center py-14">
+        <h2 className="text-3xl font-bold mb-3">Need Immediate Help?</h2>
+        <p className="text-green-100 mb-5">
+          Contact our support team for quick assistance.
+        </p>
+        <button className="bg-white text-green-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition">
+          Call Now
+        </button>
+      </div>
+
       {/* FOOTER */}
-      <div className="bg-gray-900 py-8 text-center">
+      <div className="bg-gray-900 py-6 text-center">
         <p className="text-gray-400 text-sm">
-          &copy; {new Date().getFullYear()} SMIT Courses Portal. All rights reserved.
+          &copy; {new Date().getFullYear()} SMIT Portal. All rights reserved.
         </p>
       </div>
     </div>

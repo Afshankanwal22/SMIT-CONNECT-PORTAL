@@ -10,6 +10,8 @@ import MyLeaves from "./pages/MyLeaves";
 import AdminLeaves from "./pages/AdminLeaves";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import ForgotPassword from "./pages/ForgotPassword";
+import UpdatePassword from "./pages/UpdatePassword";
 
 function App() {
   return (
@@ -26,6 +28,8 @@ function App() {
         <Route path="/admin/leaves" element={<AdminLeaves />} />
         <Route path="/About" element={<About />} />
         <Route path="Contact" element={<Contact />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/update-password" element={<UpdatePassword />} />
       </Routes>
     </BrowserRouter>
   );
