@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import Swal from "sweetalert2";
-import "Sweetalert2/dist/Sweetalert2.min.css";
+import "sweetalert2/dist/sweetalert2.min.css";
 
 export default function Leave() {
   const [reason, setReason] = useState("");
