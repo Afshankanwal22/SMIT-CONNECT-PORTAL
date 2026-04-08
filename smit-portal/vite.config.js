@@ -9,7 +9,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      external: [] // ✅ make sure nothing externalizes SweetAlert2
+      external: [] 
     }
   }
 })
