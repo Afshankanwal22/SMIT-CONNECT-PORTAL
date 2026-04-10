@@ -1,210 +1,145 @@
-// AdminPanel.jsx
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import "sweetalert2/dist/sweetalert2.min.css";
-import UploadStudents from "../components/UploadStudents";
-import { FaBook, FaUserGraduate, FaSignOutAlt } from "react-icons/fa";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import { FaDownload, FaTrash, FaSearch } from "react-icons/fa";
 
 export default function AdminPanel() {
-  const navigate = useNavigate();
-  const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
-  const [name, setName] = useState("");
-  const [status, setStatus] = useState("open");
-  const [editingId, setEditingId] = useState(null);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Fetch courses
-  const getCourses = async () => {
+  // Fetch Students
+  const getStudents = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("courses")
+    const { data } = await supabase
+      .from("students")
       .select("*")
-      .order("id", { ascending: true });
-    if (!error) setCourses(data);
+      .order("id", { ascending: false });
+
+    setStudents(data || []);
     setLoading(false);
   };
 
   useEffect(() => {
-    getCourses();
+    getStudents();
   }, []);
 
-  // Save course
-  const saveCourse = async () => {
-    if (!name) return Swal.fire("Error", "Course name is required", "error");
-    setLoading(true);
-
-    if (editingId) {
-      await supabase.from("courses").update({ name, status }).eq("id", editingId);
-      Swal.fire("Success", "Course updated successfully", "success");
-      setEditingId(null);
-    } else {
-      await supabase.from("courses").insert([{ name, status }]);
-      Swal.fire("Success", "Course added successfully", "success");
-    }
-
-    setName("");
-    setStatus("open");
-    getCourses();
-  };
-
-  const editCourse = (course) => {
-    setName(course.name);
-    setStatus(course.status);
-    setEditingId(course.id);
-  };
-
-  const deleteCourse = (id) => {
-    Swal.fire({
-      title: "Are you sure?",
-      text: "This will delete the course permanently!",
+  // DELETE
+  const deleteStudent = async (id) => {
+    const confirm = await Swal.fire({
+      title: "Delete Student?",
+      text: "This action cannot be undone!",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Yes, delete it!",
-      cancelButtonText: "Cancel",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        await supabase.from("courses").delete().eq("id", id);
-        Swal.fire("Deleted!", "Course has been deleted.", "success");
-        getCourses();
-      }
+      confirmButtonColor: "#e3342f",
     });
+
+    if (confirm.isConfirmed) {
+      await supabase.from("students").delete().eq("id", id);
+      Swal.fire("Deleted!", "Student removed", "success");
+      getStudents();
+    }
   };
 
-  const logout = () => {
-    localStorage.removeItem("admin");
-    navigate("/admin/login");
-  };
+  // EXCEL DOWNLOAD
+  const downloadExcel = () => {
+    if (students.length === 0) {
+      Swal.fire("Error", "No data available", "warning");
+      return;
+    }
 
-  const handleStudentsUpload = (newStudents) => {
-    setStudents(newStudents);
+    const ws = XLSX.utils.json_to_sheet(students);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Students");
+
+    const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+
+    const file = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(file, "Students_Data.xlsx");
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-lg fixed h-full p-6 flex flex-col justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-10">
-            <img src="https://lms.saylanimit.com/logo.png" alt="Logo" className="h-22 w-32 object-contain" />
-          </div>
-          <nav className="flex flex-col gap-4">
-            <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex items-center gap-2 text-gray-700 hover:text-green-600">
-              <FaBook /> Dashboard
-            </button>
-            <button onClick={() => document.getElementById("upload-students")?.scrollIntoView({ behavior: "smooth" })} className="flex items-center gap-2 text-gray-700 hover:text-green-600">
-              <FaUserGraduate /> Upload Students
-            </button>
-            <button onClick={() => document.getElementById("courses-list")?.scrollIntoView({ behavior: "smooth" })} className="flex items-center gap-2 text-gray-700 hover:text-green-600">
-              <FaBook /> Courses List
-            </button>
-          </nav>
-        </div>
-        <button onClick={logout} className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
-          <FaSignOutAlt /> Logout
+    <div className="min-h-screen bg-gray-100 p-6">
+
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">
+          Admin Dashboard
+        </h1>
+
+        <button
+          onClick={downloadExcel}
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow"
+        >
+          <FaDownload /> Export Excel
         </button>
-      </aside>
+      </div>
 
-      {/* Main Content */}
-      <main className="flex-1 ml-64 p-8">
-        <h1 className="text-3xl font-bold mb-8 text-gray-800">Admin Dashboard</h1>
+      {/* SEARCH */}
+      <div className="relative mb-6">
+        <FaSearch className="absolute top-3 left-3 text-gray-400" />
+        <input
+          placeholder="Search student by name..."
+          className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-400 outline-none"
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white p-6 shadow rounded-lg hover:shadow-xl transition">
-            <h3 className="text-lg font-semibold mb-2">Total Courses</h3>
-            <p className="text-2xl font-bold">{courses.length}</p>
-          </div>
-          <div className="bg-white p-6 shadow rounded-lg hover:shadow-xl transition">
-            <h3 className="text-lg font-semibold mb-2">Uploaded Students</h3>
-            <p className="text-2xl font-bold">{students.length}</p>
-          </div>
-          <div className="bg-white p-6 shadow rounded-lg hover:shadow-xl transition">
-            <h3 className="text-lg font-semibold mb-2">Open Courses</h3>
-            <p className="text-2xl font-bold">{courses.filter(c => c.status === 'open').length}</p>
-          </div>
-        </div>
+      {/* TABLE CARD */}
+      <div className="bg-white shadow-lg rounded-xl overflow-hidden">
 
-        {/* Upload Students */}
-        <section id="upload-students" className="bg-white shadow-lg rounded-xl p-6 mb-8 hover:shadow-xl transition">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-700">Upload Students (Excel)</h2>
-          <UploadStudents onUpload={handleStudentsUpload} />
+        {loading ? (
+          <p className="text-center py-10 text-gray-500">Loading...</p>
+        ) : students.length === 0 ? (
+          <p className="text-center py-10 text-gray-500">
+            No students found
+          </p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+              <tr>
+                <th className="p-4 text-left">Name</th>
+                <th className="p-4 text-left">Course</th>
+                <th className="p-4 text-left">CNIC</th>
+                <th className="p-4 text-left">Action</th>
+              </tr>
+            </thead>
 
-          {/* Students Preview Table */}
-          {students.length > 0 && (
-            <div className="mt-6 overflow-x-auto">
-              <h3 className="text-xl font-semibold mb-3 text-gray-700">Uploaded Students Preview</h3>
-              <table className="min-w-full table-auto border-collapse">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="border-b px-4 py-2 text-left text-gray-600">Name</th>
-                    <th className="border-b px-4 py-2 text-left text-gray-600">Email</th>
-                    <th className="border-b px-4 py-2 text-left text-gray-600">Course</th>
+            <tbody>
+              {students
+                .filter((s) =>
+                  s.name.toLowerCase().includes(search.toLowerCase())
+                )
+                .map((s) => (
+                  <tr
+                    key={s.id}
+                    className="border-t hover:bg-gray-50 transition"
+                  >
+                    <td className="p-4 font-medium text-gray-800">
+                      {s.name}
+                    </td>
+                    <td className="p-4">{s.course}</td>
+                    <td className="p-4">{s.cnic}</td>
+
+                    <td className="p-4">
+                      <button
+                        onClick={() => deleteStudent(s.id)}
+                        className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                      >
+                        <FaTrash /> Delete
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {students.map((s, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                      <td className="border-b px-4 py-2">{s.name}</td>
-                      <td className="border-b px-4 py-2">{s.email}</td>
-                      <td className="border-b px-4 py-2">{s.course}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-
-        {/* Add / Edit Courses */}
-        <section className="bg-white shadow-lg rounded-xl p-6 mb-8 hover:shadow-xl transition">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-700">{editingId ? "Edit Course" : "Add New Course"}</h2>
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            <input type="text" placeholder="Course Name" value={name} onChange={(e) => setName(e.target.value)} className="border border-gray-300 p-3 rounded-lg flex-1 focus:outline-none focus:ring-2 focus:ring-green-400" />
-            <select value={status} onChange={(e) => setStatus(e.target.value)} className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
-              <option value="open">Open</option>
-              <option value="closed">Closed</option>
-            </select>
-            <button onClick={saveCourse} disabled={loading} className={`px-6 py-3 rounded-lg font-semibold text-white transition ${editingId ? "bg-blue-600 hover:bg-blue-700" : "bg-green-600 hover:bg-green-700"} ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
-              {loading ? "Processing..." : editingId ? "Update" : "Add"}
-            </button>
-          </div>
-        </section>
-
-        {/* Courses List */}
-        <section id="courses-list" className="bg-white shadow-lg rounded-xl p-6 hover:shadow-xl transition">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-700">Courses List</h2>
-          {courses.length === 0 ? (
-            <p className="text-gray-500">No courses added yet.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full table-auto border-collapse">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="border-b px-4 py-2 text-left text-gray-600">Course Name</th>
-                    <th className="border-b px-4 py-2 text-left text-gray-600">Status</th>
-                    <th className="border-b px-4 py-2 text-left text-gray-600">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {courses.map((c) => (
-                    <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="border-b px-4 py-2">{c.name}</td>
-                      <td className="border-b px-4 py-2"><span className={`px-2 py-1 text-xs rounded ${c.status === "open" ? "bg-green-200 text-green-800" : "bg-red-200 text-red-800"}`}>{c.status.toUpperCase()}</span></td>
-                      <td className="border-b px-4 py-2 flex gap-2">
-                        <button onClick={() => editCourse(c)} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition">Edit</button>
-                        <button onClick={() => deleteCourse(c.id)} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition">Delete</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      </main>
+                ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
-// MyLeaves.jsx
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { FaCalendarAlt, FaInfoCircle } from "react-icons/fa";
 
 export default function MyLeaves() {
   const [leaves, setLeaves] = useState([]);
@@ -8,14 +8,15 @@ export default function MyLeaves() {
 
   const getMyLeaves = async () => {
     setLoading(true);
-    // Replace "123" with dynamic student_id from auth/localStorage
     const studentId = localStorage.getItem("student_id") || "123";
-    const { data, error } = await supabase
+
+    const { data } = await supabase
       .from("leaves")
       .select("*")
       .eq("student_id", studentId)
       .order("id", { ascending: false });
-    if (!error) setLeaves(data);
+
+    setLeaves(data || []);
     setLoading(false);
   };
 
@@ -25,45 +26,73 @@ export default function MyLeaves() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">My Leave Requests</h1>
 
+      {/* HEADER */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">
+          My Leave Requests
+        </h1>
+        <p className="text-gray-500 text-sm">
+          Track your leave applications and status
+        </p>
+      </div>
+
+      {/* LOADING */}
       {loading ? (
-        <p className="text-gray-500">Loading...</p>
+        <div className="text-center py-10 text-gray-500">
+          Loading your leaves...
+        </div>
       ) : leaves.length === 0 ? (
-        <p className="text-gray-500">You have not applied for any leaves yet.</p>
+        <div className="bg-white rounded-xl shadow p-10 text-center">
+          <FaInfoCircle className="text-4xl text-gray-400 mx-auto mb-3" />
+          <p className="text-gray-500">
+            You have not applied for any leaves yet.
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+
           {leaves.map((l) => (
             <div
               key={l.id}
-              className="bg-white p-6 shadow rounded-lg hover:shadow-xl transition"
+              className="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-6 flex flex-col justify-between"
             >
-              <h2 className="text-xl font-semibold mb-2 text-gray-700">
-                {l.reason}
-              </h2>
+              {/* TOP */}
+              <div>
+                <h2 className="text-lg font-bold text-gray-800 mb-2">
+                  {l.reason}
+                </h2>
 
-              <p className="text-gray-600 mb-1">
-                <b>From:</b> {l.from_date}
-              </p>
-              <p className="text-gray-600 mb-3">
-                <b>To:</b> {l.to_date}
-              </p>
+                {/* DATE */}
+                <div className="flex items-center text-gray-500 text-sm mb-2 gap-2">
+                  <FaCalendarAlt />
+                  <span>
+                    {l.from_date} → {l.to_date}
+                  </span>
+                </div>
+              </div>
 
-              <p>
+              {/* STATUS */}
+              <div className="mt-4 flex justify-between items-center">
                 <span
-                  className={`px-2 py-1 text-xs rounded font-semibold ${
+                  className={`px-3 py-1 text-xs rounded-full font-semibold ${
                     l.status === "pending"
-                      ? "bg-yellow-200 text-yellow-800"
+                      ? "bg-yellow-100 text-yellow-700"
                       : l.status === "approved"
-                      ? "bg-green-200 text-green-800"
-                      : "bg-red-200 text-red-800"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
                   }`}
                 >
                   {l.status.toUpperCase()}
                 </span>
-              </p>
+
+                <span className="text-xs text-gray-400">
+                  ID: {l.id}
+                </span>
+              </div>
             </div>
           ))}
+
         </div>
       )}
     </div>
