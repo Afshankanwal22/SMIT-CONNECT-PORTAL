@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiMenu, FiX } from "react-icons/fi";
-import Swal from "sweetalert2";
+import Swal from "sweetalert2"
 
 export default function Home() {
   const navigate = useNavigate();
